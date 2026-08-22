@@ -11,14 +11,12 @@ moment, then snaps back to you. Anyone it touches is cut down, and anything expl
 it passes goes off. It never hurts the player who threw it.
 
 On the way out it stops at walls and spins there. On the way back it passes straight through
-platforms, so it always finds you. If it can't reach you within a few seconds it blinks and
-gives up.
+platforms, so it always finds you. If it can't reach you within 3 seconds it blinks and
+gives up. Scales with bopl's size.
 
 - **Cooldown:** 2.45 seconds
 - **Range:** a light throw travels about a quarter as far as a full one
 - **Hang time:** 1.5 seconds at the far end
-- **Gives up after:** 3 seconds of chasing you
-- **Scales:** with the thrower — a grown player throws a bigger one
 - **Dependencies:** BepInEx only
 
 ## Installing
