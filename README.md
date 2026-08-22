@@ -35,17 +35,6 @@ profile as a code for them to import.
 Public matchmaking is disabled by the game whenever any mod is loaded. That's Bopl's rule, not
 this mod's.
 
-## Building from source
-
-Requires the .NET SDK and a Steam copy of Bopl Battle.
-
-```bash
-dotnet build -c Release
-```
-
-The paths to the game and to your mod profile are set at the top of `Boomerang.csproj` — change
-them to match your machine. **Close the game before building**; Windows locks the DLL while it
-is loaded.
 
 ## License
 
