@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Target framework: netstandard2.1. netstandard2.0 fails to build against this
+    game's dependency set. Do not change without re-verifying.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Boomerang</AssemblyName>
+    <RootNamespace>Boomerang</RootNamespace>
+    <Description>A Bopl Battle ability: throw spinning playing cards that hang, then boomerang back.</Description>
+    <Version>1.0.0</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+
+    <!-- Where the game itself lives (Steam install). Paths contain spaces; keep quoted. -->
+    <GameDir>C:\Program Files (x86)\Steam\steamapps\common\Bopl Battle</GameDir>
+    <GameManagedDir>$(GameDir)\BoplBattle_Data\Managed</GameManagedDir>
+
+    <!-- Where this mod must end up to be loaded: the Thunderstore profile, not the
+         Steam folder. BepInEx lives in the profile. -->
+    <ProfileDir>C:\Users\12026\AppData\Roaming\Thunderstore Mod Manager\DataFolder\BoplBattle\profiles\Maha blast</ProfileDir>
+    <PluginOutDir>$(ProfileDir)\BepInEx\plugins\Boomerang</PluginOutDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.5" IncludeAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(GameManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\AbilityIconBoomerang.png">
+      <LogicalName>Boomerang.AbilityIconBoomerang.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Boomerang.png">
+      <LogicalName>Boomerang.Boomerang.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Pickup.wav">
+      <LogicalName>Boomerang.Pickup.wav</LogicalName>
+    </EmbeddedResource>
+</ItemGroup>
+
+  <!--
+    Post-build: copy into the Thunderstore profile's plugins folder. The game must be
+    closed before every build because Windows locks the loaded DLL; if the copy fails,
+    fail the build loudly rather than silently leaving stale code in place.
+  -->
+  <Target Name="CopyToProfilePlugins" AfterTargets="Build">
+    <MakeDir Directories="$(PluginOutDir)" Condition="!Exists('$(PluginOutDir)')" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutDir)" ContinueOnError="false" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(PluginOutDir)"
+          Condition="Exists('$(TargetDir)$(TargetName).pdb')" ContinueOnError="false" />
+    <Warning Text="Boomerang.dll copied to $(PluginOutDir)" />
+  </Target>
+
+</Project>

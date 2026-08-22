@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+*.user
+.vs/
+
+# Reference material only - MUST NOT be published.
+# These are decompiled Bopl Battle source and other authors' redistributed
+# binaries, kept locally for reading while developing.
+refsrc/
+refmods/
+lib/
+*.dll
+*.pdb
+
+# Packaged output
+thunderstore/*.zip
+
+# Local reference material (decompiled game source, other authors' mods)
+_reference/
+
