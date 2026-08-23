@@ -61,11 +61,64 @@ namespace Boomerang
         //
         // `bodiesSeen` reports how many bodies were found for that player regardless of
         // position, which is what tells a legitimate miss apart from this scan being blind.
+        // A player the game itself has made untouchable.
+        //
+        // The block ability (PlatformTransform) protects its user by DISABLING THEIR HURTBOX
+        // -- it does not make them invulnerable, it removes the thing collisions land on. Our
+        // kill tests are positional and call killPlayer directly, so they never meet that
+        // hurtbox and would cheerfully kill someone the rest of the game cannot touch.
+        //
+        // Tested through the game's own public flag rather than by inspecting colliders: it
+        // is exact, and it cannot mistake some other disabled component for protection and
+        // quietly stop kills working.
+        public static bool IsProtected(int playerId)
+        {
+            PlayerHandler handler = PlayerHandler.Get();
+            Player player = handler == null ? null : handler.GetPlayer(playerId);
+            if (player != null && player.InPlatformTransform)
+            {
+                return true;
+            }
+
+            // Steering a platform protects them too.
+            //
+            // This one is a house rule rather than the game's. ControlPlatform leaves the
+            // player's hurtbox switched ON, so their face on the platform genuinely is a
+            // target and the game's own laser kills them through it. We refuse anyway,
+            // because being killed through a platform you are driving reads as a bug to the
+            // person it happens to.
+            //
+            // Found by component rather than by a flag: unlike PlatformTransform, there is
+            // no InControlPlatform on Player to ask.
+            foreach (ControlPlatform steering in UnityEngine.Object.FindObjectsOfType<ControlPlatform>())
+            {
+                if (steering == null || !steering.isActiveAndEnabled)
+                {
+                    continue;
+                }
+                IPlayerIdHolder holder = steering.GetComponent<IPlayerIdHolder>();
+                if (holder != null && holder.GetPlayerId() == playerId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // respectProtection: true for anything thrown, fired or swung at a player -- those
+        // must not reach someone the game has made untouchable. False only for an effect the
+        // victim is CARRYING, which is nobody's aim and cannot be hidden from.
         public static int KillWhere(int victimId, int killerId, CauseOfDeath causeOfDeath,
-                                    Func<Vec2, bool> isInside, out int bodiesSeen)
+                                    Func<Vec2, bool> isInside, out int bodiesSeen,
+                                    bool respectProtection = true)
         {
             bodiesSeen = 0;
             int killed = 0;
+
+            if (respectProtection && IsProtected(victimId))
+            {
+                return 0;
+            }
 
             foreach (PlayerCollision collision in UnityEngine.Object.FindObjectsOfType<PlayerCollision>())
             {
@@ -98,7 +151,8 @@ namespace Boomerang
                     // Already killed once by us. See alreadyKilled.
                     continue;
                 }
-                if (collision.killPlayer(killerId, spawnEffect: true, ignoreInvulnerability: false,
+                if (collision.killPlayer(killerId, spawnEffect: true,
+                                         ignoreInvulnerability: !respectProtection,
                                          causeOfDeath))
                 {
                     alreadyKilled.Add(collision.GetInstanceID());
@@ -112,9 +166,10 @@ namespace Boomerang
         // Every live body of a player, wherever it is. For effects that are not positional --
         // a fuse running out on whoever is carrying the bomb kills them wherever they are.
         public static int KillAll(int victimId, int killerId, CauseOfDeath causeOfDeath,
-                                  out int bodiesSeen)
+                                  out int bodiesSeen, bool respectProtection = true)
         {
-            return KillWhere(victimId, killerId, causeOfDeath, position => true, out bodiesSeen);
+            return KillWhere(victimId, killerId, causeOfDeath, position => true, out bodiesSeen,
+                             respectProtection);
         }
 
         // Said once per session, not once per tick: if this scan ever finds nothing, the
